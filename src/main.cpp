@@ -297,7 +297,7 @@ void pairAlign (const CloudPtr cloud_src,
   reg.setInputTarget(points_with_normals_tgt);
 
   // Run the same optimization in a loop and visualize the results
-  Eigen::Matrix4f prev, targetToSource, Ti;
+  Eigen::Matrix4f prev, Ti;
   Ti = Eigen::Matrix4f::Identity ();
 //  auto prev = Eigen::Matrix4f::Identity ();
 //  auto targetToSource = Eigen::Matrix4f::Identity ();
@@ -315,7 +315,7 @@ void pairAlign (const CloudPtr cloud_src,
     reg.align(*reg_result);
 
     //accumulate transformation between each Iteration
-    Ti = reg.getFinalTransformation() * Ti;
+    Ti = static_cast<Eigen::Matrix4f>(reg.getFinalTransformation()) * Ti;
 
     //if the difference between this transformation and the previous one
     //is smaller than the threshold, refine the process by reducing
@@ -397,10 +397,10 @@ int main(int argc, char **argv) {
   auto source_table = getPointsOnTable(source, -0.02);
 
   final_transform = Eigen::Matrix4f::Identity();
-
   auto final_cloud = boost::make_shared<Cloud>();
   pairAlign(source_table, target_table, final_cloud, final_transform);
   pcl::transformPointCloud(*source_table, *source_table, final_transform);
+  pcl::transformPointCloud(*source, *source, final_transform);
 
   std::cout << "Final transformation: RT = " << std::endl << final_transform << std::endl;
 
@@ -412,8 +412,8 @@ int main(int argc, char **argv) {
       colorHandlerTarget(target_table, 0, 0, 255);
   pcl::visualization::PointCloudColorHandlerCustom<PointType>
       colorHandler(source_table, 255, 200, 200);
-  viewer.addPointCloud(target_table, "original");
-  viewer.addPointCloud(source_table, colorHandler, "source");
+  viewer.addPointCloud(target, "original");
+  viewer.addPointCloud(source, "source");
 
   viewer.initCameraParameters();
   pcl::visualization::Camera camera;
